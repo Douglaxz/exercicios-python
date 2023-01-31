@@ -4,13 +4,16 @@ import random
 
 from typing import List
 
+lock = threading.RLock()
+
 class Conta:
     def __init__(self, saldo=0)-> None:
         self.saldo = saldo
 
 def main():
     contas = criar_contas()
-    total = sum(conta.saldo for conta in contas)
+    with lock:
+        total = sum(conta.saldo for conta in contas)
     print('iniciando transferencias.....')
 
     tarefas = [
@@ -49,12 +52,15 @@ def criar_contas() -> List[Conta]:
 def transferir(origem: Conta, destino: Conta, valor: int):
     if origem.saldo < valor:
         return
-    origem.saldo -=valor
-    time.sleep(0.001)
-    destino.saldo += valor
+    with lock:
+        origem.saldo -=valor
+        time.sleep(0.001)
+        destino.saldo += valor
 
 def valida_banco(contas: List[Conta], total: int):
-    atual = sum(conta.saldo for conta in contas)
+    with lock:
+        atual = sum(conta.saldo for conta in contas)
+    
     if atual != total:
         print(f'ERRO: Balança bancário inconsistente. BRL $ {atual:.2f} vs {total:.2f}', flush=True)
     else:
